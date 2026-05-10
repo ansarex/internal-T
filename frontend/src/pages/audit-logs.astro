@@ -1,0 +1,13 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import AppSidebar from '../components/shared/AppSidebar.vue';
+import AuditLogsPage from '../components/shared/AuditLogsPage.vue';
+---
+<AppLayout title="Audit Logs">
+  <div class="flex min-h-screen">
+    <AppSidebar client:only="vue" />
+    <main class="flex-1 p-6 overflow-auto">
+      <AuditLogsPage client:only="vue" />
+    </main>
+  </div>
+</AppLayout>

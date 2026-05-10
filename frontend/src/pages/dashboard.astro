@@ -1,0 +1,13 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import AppSidebar from '../components/shared/AppSidebar.vue';
+import DashboardPage from '../components/dashboard/DashboardPage.vue';
+---
+<AppLayout title="Dashboard">
+  <div class="flex min-h-screen">
+    <AppSidebar client:only="vue" />
+    <main class="flex-1 p-6 overflow-auto">
+      <DashboardPage client:only="vue" />
+    </main>
+  </div>
+</AppLayout>

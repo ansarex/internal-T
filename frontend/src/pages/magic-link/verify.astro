@@ -1,0 +1,7 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+import MagicLinkVerify from '../../components/auth/MagicLinkVerify.vue';
+---
+<AuthLayout title="Signing in">
+  <MagicLinkVerify client:only="vue" />
+</AuthLayout>

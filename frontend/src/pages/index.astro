@@ -1,0 +1,16 @@
+---
+---
+<!DOCTYPE html>
+<html>
+<head><title>Trustwired</title></head>
+<body>
+  <script>
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.href = '/login';
+    }
+  </script>
+</body>
+</html>

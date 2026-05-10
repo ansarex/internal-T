@@ -1,0 +1,49 @@
+---
+import AuthLayout from '../layouts/AuthLayout.astro';
+---
+<AuthLayout title="Verify Email">
+  <div id="verify-container" class="bg-white rounded-xl shadow p-8 text-center">
+    <p class="text-gray-500">Verifying your email...</p>
+  </div>
+  <script>
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const hash = params.get('hash');
+      const expires = params.get('expires');
+      const signature = params.get('signature');
+
+      const container = document.getElementById('verify-container');
+
+      if (!id || !hash) {
+        container!.innerHTML = '<p class="text-red-600">Invalid verification link.</p>';
+        return;
+      }
+
+      try {
+        const apiUrl = (import.meta.env.PUBLIC_API_URL || 'http://localhost:8080');
+        const response = await fetch(
+          `${apiUrl}/api/email/verify/${id}/${hash}?expires=${expires}&signature=${signature}`
+        );
+        const data = await response.json();
+
+        if (response.ok) {
+          container!.innerHTML = `
+            <div class="text-green-600 text-xl font-semibold mb-2">Email Verified!</div>
+            <p class="text-gray-500 mb-4">${data.message}</p>
+            <a href="/login" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+              Go to Login
+            </a>
+          `;
+        } else {
+          container!.innerHTML = `
+            <div class="text-red-600 text-xl font-semibold mb-2">Verification Failed</div>
+            <p class="text-gray-500">${data.message}</p>
+          `;
+        }
+      } catch (e) {
+        container!.innerHTML = '<p class="text-red-600">An error occurred. Please try again.</p>';
+      }
+    })();
+  </script>
+</AuthLayout>

@@ -1,0 +1,13 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import AppSidebar from '../components/shared/AppSidebar.vue';
+import ApprovalsPage from '../components/job-requests/ApprovalsPage.vue';
+---
+<AppLayout title="Approvals">
+  <div class="flex min-h-screen">
+    <AppSidebar client:only="vue" />
+    <main class="flex-1 p-6 overflow-auto">
+      <ApprovalsPage client:only="vue" />
+    </main>
+  </div>
+</AppLayout>

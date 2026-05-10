@@ -1,0 +1,18 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Go backend
+backend/tmp/
+backend/storage/*
+!backend/storage/.gitkeep
+backend/*.exe
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+
+# macOS
+.DS_Store
