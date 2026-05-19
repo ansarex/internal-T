@@ -27,7 +27,7 @@ func (h *Handler) GetClients(c *gin.Context) {
 	}
 
 	var clients []models.Client
-	if err := query.Order("clients.created_at DESC").Find(&clients).Error; err != nil {
+	if err := query.Order("created_at DESC").Find(&clients).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch clients."})
 		return
 	}
@@ -43,8 +43,8 @@ func (h *Handler) GetClients(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"clients":          clients,
-		"total_recurring":  totalRecurring,
+		"clients":         clients,
+		"total_recurring": totalRecurring,
 	})
 }
 
@@ -119,8 +119,8 @@ func (h *Handler) CreateClient(c *gin.Context) {
 	}, c.ClientIP())
 
 	h.Audit.LogCreate(&uid, "JobRequest", jobRequest.ID, map[string]interface{}{
-		"client_id":    jobRequest.ClientID,
-		"status":       jobRequest.Status,
+		"client_id":     jobRequest.ClientID,
+		"status":        jobRequest.Status,
 		"current_stage": jobRequest.CurrentStage,
 	}, c.ClientIP())
 
@@ -257,10 +257,10 @@ func (h *Handler) ActivateClient(c *gin.Context) {
 	now := time.Now()
 
 	updates := map[string]interface{}{
-		"account_status":               "active",
-		"pending_account_status":        nil,
-		"pending_status_requested_by":   nil,
-		"pending_status_requested_at":   nil,
+		"account_status":              "active",
+		"pending_account_status":      nil,
+		"pending_status_requested_by": nil,
+		"pending_status_requested_at": nil,
 	}
 
 	h.DB.Model(&client).Updates(updates)
