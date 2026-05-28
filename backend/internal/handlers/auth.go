@@ -6,12 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/trustwired/internal-t/internal/middleware"
 	"github.com/trustwired/internal-t/internal/models"
 	"golang.org/x/crypto/bcrypt"
@@ -192,9 +193,13 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	hash := sha256.Sum256([]byte(req.Token))
 	hashedToken := hex.EncodeToString(hash[:])
 
-	var storedHash string
-	var expiryTime int64
-	fmt.Sscanf(*user.RememberToken, "%s|%d", &storedHash, &expiryTime)
+	parts := strings.SplitN(*user.RememberToken, "|", 2)
+	if len(parts) != 2 {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Invalid or expired reset token."})
+		return
+	}
+	storedHash := parts[0]
+	expiryTime, _ := strconv.ParseInt(parts[1], 10, 64)
 
 	if storedHash != hashedToken || time.Now().Unix() > expiryTime {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "Invalid or expired reset token."})
@@ -217,72 +222,6 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully."})
 }
 
-// AuthWithSupabase exchanges a Supabase access_token for our own session token.
-// The frontend calls this after the Supabase magic link flow completes.
-func (h *Handler) AuthWithSupabase(c *gin.Context) {
-	var req struct {
-		AccessToken string `json:"access_token" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": "access_token is required."})
-		return
-	}
-
-	// Verify the Supabase JWT (HS256, signed with the project JWT secret)
-	type supabaseClaims struct {
-		Email string `json:"email"`
-		jwt.RegisteredClaims
-	}
-	token, err := jwt.ParseWithClaims(req.AccessToken, &supabaseClaims{}, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-		}
-		return []byte(h.Config.SupabaseJWTSecret), nil
-	})
-	if err != nil || !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid or expired Supabase token."})
-		return
-	}
-
-	claims, ok := token.Claims.(*supabaseClaims)
-	if !ok || claims.Email == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Could not read token claims."})
-		return
-	}
-
-	// Look up user in our database by email
-	var user models.User
-	if err := h.DB.Where("email = ?", claims.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "No account found for this email. Contact your administrator."})
-		return
-	}
-
-	if !user.IsActive {
-		c.JSON(http.StatusForbidden, gin.H{"message": "Your account has been deactivated. Contact the Owner."})
-		return
-	}
-
-	// Auto-verify email on first magic link sign-in
-	if user.EmailVerifiedAt == nil {
-		now := time.Now()
-		h.DB.Model(&user).Update("email_verified_at", now)
-		user.EmailVerifiedAt = &now
-	}
-
-	sessionToken, _, err := generateToken(h.DB, user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create session."})
-		return
-	}
-
-	h.Audit.LogLogin(user.ID, c.ClientIP())
-
-	c.JSON(http.StatusOK, gin.H{
-		"token": sessionToken,
-		"user":  user,
-	})
-}
-
 func (h *Handler) RequestMagicLink(c *gin.Context) {
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
@@ -303,7 +242,11 @@ func (h *Handler) RequestMagicLink(c *gin.Context) {
 		stored := fmt.Sprintf("%s|%d", hex.EncodeToString(hash[:]), time.Now().Add(15*time.Minute).Unix())
 
 		h.DB.Model(&user).Update("remember_token", stored)
-		go h.Email.SendMagicLinkEmail(user.Email, plainToken)
+		go func() {
+			if err := h.Email.SendMagicLinkEmail(user.Email, plainToken); err != nil {
+				log.Printf("SendMagicLinkEmail to %s failed: %v", user.Email, err)
+			}
+		}()
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "If that email exists, a sign-in link has been sent."})
@@ -338,9 +281,13 @@ func (h *Handler) VerifyMagicLink(c *gin.Context) {
 	hash := sha256.Sum256([]byte(req.Token))
 	hashedToken := hex.EncodeToString(hash[:])
 
-	var storedHash string
-	var expiryUnix int64
-	fmt.Sscanf(*user.RememberToken, "%s|%d", &storedHash, &expiryUnix)
+	parts := strings.SplitN(*user.RememberToken, "|", 2)
+	if len(parts) != 2 {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid or expired sign-in link."})
+		return
+	}
+	storedHash := parts[0]
+	expiryUnix, _ := strconv.ParseInt(parts[1], 10, 64)
 
 	if storedHash != hashedToken || time.Now().Unix() > expiryUnix {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid or expired sign-in link."})

@@ -33,19 +33,11 @@
         </svg>
       </div>
       <h2 class="text-xl font-bold text-gray-800 mb-2">Sign-in failed</h2>
-      <p class="text-red-600 text-sm font-medium mb-3">{{ errorMessage }}</p>
-
-      <!-- Debug info -->
-      <div class="text-left bg-gray-100 rounded-lg p-3 mb-6 text-xs text-gray-600 break-all">
-        <p class="font-semibold mb-1">Debug info:</p>
-        <p><span class="font-medium">URL hash:</span> {{ debugHash || '(empty — no token in URL)' }}</p>
-        <p class="mt-1"><span class="font-medium">Has access_token:</span> {{ debugHasToken }}</p>
-      </div>
-
+      <p class="text-red-600 text-sm font-medium mb-6">{{ errorMessage }}</p>
       <a
-        href="/login"
+        href="/magic-link"
         class="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 text-sm font-medium"
-      >Try again</a>
+      >Request a new link</a>
     </div>
 
   </div>
@@ -56,43 +48,31 @@ import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../utils/api';
 
-const auth         = useAuthStore();
-const state        = ref<'verifying' | 'success' | 'error'>('verifying');
+const auth = useAuthStore();
+const state = ref<'verifying' | 'success' | 'error'>('verifying');
 const errorMessage = ref('');
-const debugHash    = ref('');
-const debugHasToken = ref(false);
 
 onMounted(async () => {
   try {
-    // Supabase encodes the session in the URL hash after a magic link click:
-    // /magic-link/verify#access_token=xxx&refresh_token=xxx&type=magiclink
-    // getSession() reads from storage (too early) — parse the hash directly instead.
-    const rawHash = window.location.hash.slice(1);
-    debugHash.value = rawHash.slice(0, 80) + (rawHash.length > 80 ? '…' : '');
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const email = params.get('email');
 
-    const params = new URLSearchParams(rawHash);
-    const accessToken = params.get('access_token');
-    debugHasToken.value = !!accessToken;
-
-    if (!accessToken) {
-      throw new Error('No access_token in URL. Check that your Supabase Redirect URL is set to ' + window.location.origin + '/magic-link/verify');
+    if (!token || !email) {
+      throw new Error('Invalid sign-in link.');
     }
 
-    // Exchange the Supabase JWT for our own session token.
-    const res = await api.post('/api/auth/supabase', { access_token: accessToken });
-    const { token, user } = res.data;
+    const res = await api.post('/api/magic-link/verify', { token, email });
+    const { token: sessionToken, user } = res.data;
 
-    localStorage.setItem('auth_token', token);
-    auth.user  = user;
-    auth.token = token;
-
-    // Remove the tokens from the URL bar.
-    window.history.replaceState(null, '', window.location.pathname);
+    localStorage.setItem('auth_token', sessionToken);
+    auth.user = user;
+    auth.token = sessionToken;
 
     state.value = 'success';
     setTimeout(() => { window.location.href = '/dashboard'; }, 800);
   } catch (e: any) {
-    state.value        = 'error';
+    state.value = 'error';
     errorMessage.value = e.response?.data?.message ?? e.message ?? 'This sign-in link is invalid or has expired.';
   }
 });

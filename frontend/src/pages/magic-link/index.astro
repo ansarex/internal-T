@@ -1,0 +1,7 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+import MagicLinkRequest from '../../components/auth/MagicLinkRequest.vue';
+---
+<AuthLayout title="Sign in with email link">
+  <MagicLinkRequest client:only="vue" />
+</AuthLayout>

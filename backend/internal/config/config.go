@@ -25,10 +25,9 @@ type Config struct {
 	AWSRegion       string
 	AWSBucket       string
 	AWSEndpoint     string
-	ResendAPIKey       string
-	MailFromAddress    string
-	MailFromName       string
-	SupabaseJWTSecret  string
+	ResendAPIKey    string
+	MailFromAddress string
+	MailFromName    string
 }
 
 func Load() *Config {
@@ -53,10 +52,9 @@ func Load() *Config {
 		AWSRegion:       getEnv("AWS_DEFAULT_REGION", "sgp1"),
 		AWSBucket:       getEnv("AWS_BUCKET", ""),
 		AWSEndpoint:     getEnv("AWS_ENDPOINT", ""),
-		ResendAPIKey:      getEnv("RESEND_API_KEY", ""),
-		MailFromAddress:   getEnv("MAIL_FROM_ADDRESS", "noreply@trustwired.com"),
-		MailFromName:      getEnv("MAIL_FROM_NAME", "Trustwired"),
-		SupabaseJWTSecret: getEnv("SUPABASE_JWT_SECRET", ""),
+		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
+		MailFromAddress: getEnv("MAIL_FROM_ADDRESS", "noreply@internal-t.com"),
+		MailFromName:    getEnv("MAIL_FROM_NAME", "internal-t"),
 	}
 }
 

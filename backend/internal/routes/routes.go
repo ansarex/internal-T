@@ -29,7 +29,6 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler, db *gorm.DB, cfg *config.Co
 	{
 		// Public auth routes
 		api.POST("/login", h.Login)
-		api.POST("/auth/supabase", h.AuthWithSupabase)
 		api.POST("/magic-link", h.RequestMagicLink)
 		api.POST("/magic-link/verify", h.VerifyMagicLink)
 		api.POST("/forgot-password", h.ForgotPassword)

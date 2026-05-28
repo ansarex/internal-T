@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-xl shadow-md p-8">
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Forgot Password</h2>
-    <p class="text-gray-500 text-sm mb-6">Enter your email and we'll send you a reset link.</p>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Sign in with email link</h2>
+    <p class="text-gray-500 text-sm mb-6">Enter your email and we'll send you a sign-in link.</p>
 
     <div v-if="success" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
       <p class="text-green-700 text-sm">{{ success }}</p>
@@ -11,7 +11,7 @@
         @click="handleSubmit"
         class="mt-2 text-sm text-blue-600 hover:underline disabled:opacity-50"
       >
-        {{ loading ? 'Sending…' : 'Resend email' }}
+        {{ loading ? 'Sending…' : 'Resend link' }}
       </button>
     </div>
 
@@ -19,29 +19,29 @@
       <p class="text-red-700 text-sm">{{ errorMessage }}</p>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-4">
+    <form v-if="!success" @submit.prevent="handleSubmit" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input
           v-model="email"
           type="email"
           required
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="admin@example.com"
+          autofocus
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          placeholder="you@example.com"
         />
       </div>
-
       <button
         type="submit"
         :disabled="loading"
-        class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium"
       >
-        {{ loading ? 'Sending...' : 'Send Reset Link' }}
+        {{ loading ? 'Sending…' : 'Send sign-in link' }}
       </button>
     </form>
 
     <div class="mt-4 text-center">
-      <a href="/login" class="text-sm text-blue-600 hover:underline">Back to login</a>
+      <a href="/login" class="text-sm text-indigo-600 hover:underline">Sign in with password instead</a>
     </div>
   </div>
 </template>
@@ -57,11 +57,10 @@ const errorMessage = ref('');
 
 async function handleSubmit() {
   loading.value = true;
-  success.value = '';
   errorMessage.value = '';
   try {
-    const response = await api.post('/api/forgot-password', { email: email.value });
-    success.value = response.data.message;
+    const res = await api.post('/api/magic-link', { email: email.value });
+    success.value = res.data.message;
   } catch (e: any) {
     errorMessage.value = e.response?.data?.message || 'An error occurred.';
   } finally {

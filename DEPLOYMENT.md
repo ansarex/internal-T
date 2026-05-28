@@ -310,7 +310,7 @@ systemctl reload nginx
 ## Step 10 — Enable HTTPS (SSL)
 
 ```bash
-certbot --nginx -d internal-t.com -d www.internal-t.com -d api.internal-t.com
+certbot --nginx -d internal-t.com -d api.internal-t.com
 ```
 
 Follow the prompts. Certbot will:

@@ -38,8 +38,50 @@ import AuthLayout from '../layouts/AuthLayout.astro';
         } else {
           container!.innerHTML = `
             <div class="text-red-600 text-xl font-semibold mb-2">Verification Failed</div>
-            <p class="text-gray-500">${data.message}</p>
+            <p class="text-gray-500 mb-4">${data.message}</p>
+            <p class="text-gray-500 text-sm mb-3">Enter your email to get a new verification link.</p>
+            <form id="resend-form" class="flex flex-col items-center gap-3">
+              <input
+                id="resend-email"
+                type="email"
+                required
+                placeholder="you@example.com"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+              <button
+                type="submit"
+                id="resend-btn"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 text-sm font-medium"
+              >
+                Resend verification email
+              </button>
+              <div id="resend-msg" class="text-sm"></div>
+            </form>
           `;
+          document.getElementById('resend-form')!.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('resend-email') as HTMLInputElement;
+            const btn = document.getElementById('resend-btn') as HTMLButtonElement;
+            const msg = document.getElementById('resend-msg')!;
+            btn.disabled = true;
+            btn.textContent = 'Sending…';
+            msg.textContent = '';
+            try {
+              await fetch(`${apiUrl}/api/email/resend-verification`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailInput.value }),
+              });
+              msg.className = 'text-sm text-green-600';
+              msg.textContent = 'Verification email sent. Check your inbox.';
+            } catch {
+              msg.className = 'text-sm text-red-600';
+              msg.textContent = 'Failed to send. Please try again.';
+            } finally {
+              btn.disabled = false;
+              btn.textContent = 'Resend verification email';
+            }
+          });
         }
       } catch (e) {
         container!.innerHTML = '<p class="text-red-600">An error occurred. Please try again.</p>';

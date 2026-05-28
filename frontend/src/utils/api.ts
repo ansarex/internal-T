@@ -21,8 +21,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isLoginRequest = error.config?.url?.includes('/api/login');
-    if (error.response?.status === 401 && !isLoginRequest) {
+    const url = error.config?.url ?? '';
+    const isAuthRequest = url.includes('/api/login') || url.includes('/api/magic-link');
+    if (error.response?.status === 401 && !isAuthRequest) {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
         window.location.href = '/login';

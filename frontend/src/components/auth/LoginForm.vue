@@ -5,6 +5,16 @@
 
     <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
       <p class="text-red-700 text-sm">{{ errorMessage }}</p>
+      <button
+        v-if="showResend"
+        type="button"
+        :disabled="resendLoading"
+        @click="handleResend"
+        class="mt-2 text-sm text-blue-600 hover:underline disabled:opacity-50"
+      >
+        {{ resendLoading ? 'Sending…' : 'Resend verification email' }}
+      </button>
+      <p v-if="resendSuccess" class="mt-1 text-green-700 text-sm">{{ resendSuccess }}</p>
     </div>
 
     <form @submit.prevent="handleLogin" class="space-y-4">
@@ -30,7 +40,10 @@
         />
       </div>
       <div class="flex justify-end">
-        <a href="/forgot-password" class="text-sm text-indigo-600 hover:underline">Forgot password?</a>
+        <div class="flex gap-4">
+          <a href="/magic-link" class="text-sm text-indigo-600 hover:underline">Sign in with link</a>
+          <a href="/forgot-password" class="text-sm text-indigo-600 hover:underline">Forgot password?</a>
+        </div>
       </div>
       <button
         type="submit"
@@ -46,15 +59,21 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import api from '../../utils/api';
 
 const auth = useAuthStore();
 const form = reactive({ email: '', password: '' });
 const loading = ref(false);
 const errorMessage = ref('');
+const showResend = ref(false);
+const resendLoading = ref(false);
+const resendSuccess = ref('');
 
 async function handleLogin() {
   loading.value = true;
   errorMessage.value = '';
+  showResend.value = false;
+  resendSuccess.value = '';
 
   const result = await auth.login(form.email, form.password);
 
@@ -64,7 +83,8 @@ async function handleLogin() {
   }
 
   if (!result.email_verified) {
-    errorMessage.value = result.message || 'Email not verified.';
+    errorMessage.value = result.message || 'Your email address is not verified.';
+    showResend.value = true;
     loading.value = false;
     return;
   }
@@ -76,5 +96,18 @@ async function handleLogin() {
   }
 
   window.location.href = '/dashboard';
+}
+
+async function handleResend() {
+  resendLoading.value = true;
+  resendSuccess.value = '';
+  try {
+    await api.post('/api/email/resend-verification', { email: form.email });
+    resendSuccess.value = 'Verification email sent. Check your inbox.';
+  } catch {
+    resendSuccess.value = 'Verification email sent. Check your inbox.';
+  } finally {
+    resendLoading.value = false;
+  }
 }
 </script>
