@@ -23,7 +23,7 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler, db *gorm.DB, cfg *config.Co
 	requireAdmin := middleware.RequireRoles("admin")
 	requireSupportOrAdmin := middleware.RequireRoles("support", "admin")
 	requireSalesOrAdmin := middleware.RequireRoles("sales", "admin")
-	requireCS := middleware.RequireRoles("cs", "admin")
+	requireCS := middleware.RequireRoles("cs", "cs_manager", "admin")
 
 	api := r.Group("/api")
 	{
@@ -97,15 +97,15 @@ func SetupRoutes(r *gin.Engine, h *handlers.Handler, db *gorm.DB, cfg *config.Co
 			protected.GET("/audit-logs", requireAdmin, h.GetAuditLogs)
 
 			// Invoices
-			protected.GET("/invoices", requireSalesOrAdmin, h.GetInvoices)
-			protected.GET("/invoices/active-clients", requireSalesOrAdmin, h.GetActiveClientsForInvoicing)
-			protected.GET("/invoices/admin-overview", requireAdmin, h.GetAdminOverview)
-			protected.GET("/invoices/commissions", h.GetCommissions)
-			protected.POST("/invoices", requireSalesOrAdmin, h.CreateInvoice)
-			protected.POST("/invoices/:id/upload-file", requireSalesOrAdmin, h.UploadInvoiceFile)
-			protected.GET("/invoices/:id/download", h.DownloadInvoice)
-			protected.POST("/invoices/:id/pay", requireAdmin, h.PayInvoice)
-			protected.PATCH("/invoices/:id", requireSalesOrAdmin, h.UpdateInvoice)
+			protected.GET("/receipts", requireSalesOrAdmin, h.GetReceipts)
+			protected.GET("/receipts/active-clients", requireSalesOrAdmin, h.GetActiveClientsForReceipt)
+			protected.GET("/receipts/admin-overview", requireAdmin, h.GetAdminReceiptOverview)
+			protected.GET("/receipts/commissions", h.GetCommissions)
+			protected.POST("/receipts", requireSalesOrAdmin, h.CreateReceipt)
+			protected.POST("/receipts/:id/upload-file", requireSalesOrAdmin, h.UploadReceiptFile)
+			protected.GET("/receipts/:id/download", h.DownloadReceipt)
+			protected.POST("/receipts/:id/pay", requireAdmin, h.PayReceipt)
+			protected.PATCH("/receipts/:id", requireSalesOrAdmin, h.UpdateReceipt)
 		}
 	}
 }

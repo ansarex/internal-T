@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-xl border border-gray-200 p-5">
-    <h3 class="font-semibold text-gray-800 mb-4">Stage 1 — Client Details</h3>
+    <h3 class="font-semibold text-gray-800 mb-4">Sales Tasks — Client Details</h3>
     <form @submit.prevent="save" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>

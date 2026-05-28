@@ -14,12 +14,18 @@ import (
 )
 
 func (h *Handler) GetJobRequests(c *gin.Context) {
+	currentUser := middleware.GetCurrentUser(c)
+
 	var jobs []models.JobRequest
 	query := h.DB.
 		Preload("Client").
 		Preload("AssignedSales").
 		Preload("AssignedCS").
 		Order("created_at DESC")
+
+	if !currentUser.HasRole("admin") && !currentUser.HasRole("cs_manager") {
+		query = query.Where("assigned_sales_id = ? OR assigned_cs_id = ?", currentUser.ID, currentUser.ID)
+	}
 
 	if err := query.Find(&jobs).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch job requests."})
@@ -43,6 +49,8 @@ func (h *Handler) GetJobRequests(c *gin.Context) {
 }
 
 func (h *Handler) GetJobRequest(c *gin.Context) {
+	currentUser := middleware.GetCurrentUser(c)
+
 	var job models.JobRequest
 	if err := h.DB.
 		Preload("Client").
@@ -59,6 +67,15 @@ func (h *Handler) GetJobRequest(c *gin.Context) {
 		First(&job, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Job request not found."})
 		return
+	}
+
+	if !currentUser.HasRole("admin") && !currentUser.HasRole("cs_manager") {
+		isAssigned := (job.AssignedSalesID != nil && *job.AssignedSalesID == currentUser.ID) ||
+			(job.AssignedCSID != nil && *job.AssignedCSID == currentUser.ID)
+		if !isAssigned {
+			c.JSON(http.StatusForbidden, gin.H{"message": "You do not have access to this job request."})
+			return
+		}
 	}
 
 	sla := h.SLA.Calculate(&job)
@@ -169,21 +186,19 @@ func (h *Handler) UploadSignedCopy(c *gin.Context) {
 		return
 	}
 
-	// Check both SA and NDA have approved versions
-	hasSAApproved := false
-	hasNDAApproved := false
+	// Check both SA and NDA have been uploaded
+	hasSA := false
+	hasNDA := false
 	for _, ag := range job.Agreements {
-		if ag.Status == "approved" {
-			if ag.Type == "service_agreement" {
-				hasSAApproved = true
-			} else if ag.Type == "nda" {
-				hasNDAApproved = true
-			}
+		if ag.Type == "service_agreement" {
+			hasSA = true
+		} else if ag.Type == "nda" {
+			hasNDA = true
 		}
 	}
 
-	if !hasSAApproved || !hasNDAApproved {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Both Service Agreement and NDA must be approved before uploading signed copy."})
+	if !hasSA || !hasNDA {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Both Service Agreement and NDA must be uploaded before uploading signed copy."})
 		return
 	}
 

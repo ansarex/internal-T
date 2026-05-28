@@ -139,12 +139,12 @@ func GenerateSignedCopyPath(jobID uint, filename string) string {
 	return fmt.Sprintf("signed-copies/job-%d/signed_%d%s", jobID, ts, ext)
 }
 
-func GenerateInvoicePath(billingMonth time.Time, filename string) string {
+func GenerateReceiptPath(billingMonth time.Time, filename string) string {
 	ext := filepath.Ext(filename)
 	safe := sanitizeFilename(strings.TrimSuffix(filename, ext))
 	ts := time.Now().Unix()
 	month := billingMonth.Format("2006-01-02")
-	return fmt.Sprintf("invoices/%s/%s_%d%s", month, safe, ts, ext)
+	return fmt.Sprintf("receipts/%s/%s_%d%s", month, safe, ts, ext)
 }
 
 func sanitizeFilename(name string) string {

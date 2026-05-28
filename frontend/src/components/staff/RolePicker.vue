@@ -26,6 +26,7 @@ const availableRoles = [
   { value: 'support', label: 'Support', activeClass: 'bg-sky-500 text-white border-sky-500' },
   { value: 'sales', label: 'Sales', activeClass: 'bg-green-600 text-white border-green-600' },
   { value: 'cs', label: 'CS', activeClass: 'bg-orange-500 text-white border-orange-500' },
+  { value: 'cs_manager', label: 'CS Manager', activeClass: 'bg-teal-600 text-white border-teal-600' },
 ];
 
 function toggleRole(role: string) {

@@ -19,10 +19,10 @@ func (h *Handler) GetClients(c *gin.Context) {
 		Preload("JobRequests.AssignedCS")
 
 	if currentUser.HasRole("sales") && !currentUser.HasRole("support") && !currentUser.HasRole("admin") {
-		query = query.Joins("JOIN job_requests jr ON jr.client_id = clients.id").
+		query = query.Joins("JOIN job_requests jr ON jr.client_id = customer_crm.id").
 			Where("jr.assigned_sales_id = ?", currentUser.ID)
 	} else if currentUser.HasRole("cs") && !currentUser.HasRole("support") && !currentUser.HasRole("admin") {
-		query = query.Joins("JOIN job_requests jr ON jr.client_id = clients.id").
+		query = query.Joins("JOIN job_requests jr ON jr.client_id = customer_crm.id").
 			Where("jr.assigned_cs_id = ?", currentUser.ID)
 	}
 

@@ -45,8 +45,8 @@ func (h *Handler) UpdateTask(c *gin.Context) {
 		return
 	}
 
-	// CS must be the assigned CS for this job
-	if !currentUser.HasRole("admin") && currentUser.HasRole("cs") {
+	// Non-admins (cs and cs_manager) must be the assigned CS to update tasks
+	if !currentUser.HasRole("admin") {
 		if job.AssignedCSID == nil || *job.AssignedCSID != currentUser.ID {
 			c.JSON(http.StatusForbidden, gin.H{"message": "You are not the assigned CS for this job."})
 			return
@@ -54,7 +54,7 @@ func (h *Handler) UpdateTask(c *gin.Context) {
 	}
 
 	var req struct {
-		Status  string  `json:"status" binding:"required,oneof=in_progress completed"`
+		Status  string  `json:"status" binding:"required,oneof=in_progress pending_on_client completed"`
 		Remarks *string `json:"remarks"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {

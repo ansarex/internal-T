@@ -206,6 +206,7 @@ function roleBadgeClass(role: string) {
     'bg-sky-100 text-sky-800': role === 'support',
     'bg-green-100 text-green-800': role === 'sales',
     'bg-orange-100 text-orange-800': role === 'cs',
+    'bg-teal-100 text-teal-800': role === 'cs_manager',
   };
 }
 </script>

@@ -44,6 +44,9 @@ func AutoMigrate(db *gorm.DB) error {
 		return fmt.Errorf("rename clients table: %w", err)
 	}
 
+	// Expand task status enum to include pending_on_client (AutoMigrate won't do this)
+	db.Exec("ALTER TABLE `tasks` MODIFY COLUMN `status` ENUM('pending','in_progress','pending_on_client','completed') NOT NULL DEFAULT 'pending'")
+
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.PersonalAccessToken{},
@@ -54,7 +57,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Agreement{},
 		&models.Task{},
 		&models.AuditLog{},
-		&models.Invoice{},
+		&models.Receipt{},
 	); err != nil {
 		return err
 	}

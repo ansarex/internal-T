@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Invoices</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Receipts</h1>
       <div class="flex items-center gap-3">
         <input
           v-model="selectedMonth"
@@ -19,8 +19,8 @@
           <div class="text-xs text-gray-500 mt-1">Active Clients</div>
         </div>
         <div class="bg-white rounded-lg border p-3 text-center">
-          <div class="text-2xl font-bold text-green-600">{{ overview.invoiced }}</div>
-          <div class="text-xs text-gray-500 mt-1">Invoiced</div>
+          <div class="text-2xl font-bold text-green-600">{{ overview.receipted }}</div>
+          <div class="text-xs text-gray-500 mt-1">Receipted</div>
         </div>
         <div class="bg-white rounded-lg border p-3 text-center">
           <div class="text-2xl font-bold text-red-600">{{ overview.missing }}</div>
@@ -37,7 +37,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt #</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sales</th>
@@ -54,28 +54,28 @@
                 {{ row.company_name }}
                 <span v-if="row.overdue_missing" class="ml-1 text-xs text-red-600">⚠ Overdue</span>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ row.invoice?.invoice_number || '—' }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ row.invoice ? 'RM ' + formatCurrency(row.invoice.amount) : '—' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">{{ row.receipt?.receipt_number || '—' }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">{{ row.receipt ? 'RM ' + formatCurrency(row.receipt.amount) : '—' }}</td>
               <td class="px-4 py-3">
-                <span v-if="row.invoice" :class="statusBadge(row.invoice.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">
-                  {{ row.invoice.status }}
+                <span v-if="row.receipt" :class="statusBadge(row.receipt.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">
+                  {{ row.receipt.status }}
                 </span>
-                <span v-else class="text-xs text-gray-400">Not invoiced</span>
+                <span v-else class="text-xs text-gray-400">Not receipted</span>
               </td>
               <td class="px-4 py-3 text-xs text-gray-500">{{ row.assigned_sales?.name || '—' }}</td>
               <td class="px-4 py-3 text-xs text-gray-500">{{ row.assigned_cs?.name || '—' }}</td>
               <td class="px-4 py-3 text-right">
                 <div class="flex justify-end gap-2">
                   <button
-                    v-if="row.invoice && row.invoice.status !== 'paid'"
-                    @click="markPaid(row.invoice.id)"
+                    v-if="row.receipt && row.receipt.status !== 'paid'"
+                    @click="markPaid(row.receipt.id)"
                     class="text-xs text-green-600 hover:text-green-800 font-medium"
                   >
                     Mark Paid
                   </button>
                   <button
-                    v-if="row.invoice?.file_path"
-                    @click="downloadInvoice(row.invoice.id)"
+                    v-if="row.receipt?.file_path"
+                    @click="downloadReceipt(row.receipt.id)"
                     class="text-xs text-blue-600 hover:underline"
                   >
                     Download
@@ -98,7 +98,7 @@
             </div>
             <div class="text-right">
               <div class="text-sm font-semibold text-green-700">RM {{ formatCurrency(entry.commission) }}</div>
-              <div class="text-xs text-gray-400">{{ entry.invoice_count }} invoice(s)</div>
+              <div class="text-xs text-gray-400">{{ entry.receipt_count }} receipt(s)</div>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@
     <div v-else-if="auth.hasAnyRole(['sales'])" class="space-y-4">
       <div class="flex justify-end mb-2">
         <button @click="showCreate = true" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium">
-          + Record Invoice
+          + Record Receipt
         </button>
       </div>
 
@@ -117,7 +117,7 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt #</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -126,31 +126,31 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
-            <tr v-if="!invoicesStore.invoices.length">
-              <td colspan="6" class="px-4 py-8 text-center text-gray-400">No invoices found.</td>
+            <tr v-if="!receiptsStore.receipts.length">
+              <td colspan="6" class="px-4 py-8 text-center text-gray-400">No receipts found.</td>
             </tr>
-            <tr v-for="inv in invoicesStore.invoices" :key="inv.id" class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ inv.invoice_number }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">{{ inv.client?.company_name }}</td>
-              <td class="px-4 py-3 text-sm text-gray-600">RM {{ formatCurrency(inv.amount) }}</td>
+            <tr v-for="r in receiptsStore.receipts" :key="r.id" class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ r.receipt_number }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">{{ r.client?.company_name }}</td>
+              <td class="px-4 py-3 text-sm text-gray-600">RM {{ formatCurrency(r.amount) }}</td>
               <td class="px-4 py-3">
-                <span :class="statusBadge(inv.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">
-                  {{ inv.status }}
+                <span :class="statusBadge(r.status)" class="px-2 py-0.5 rounded-full text-xs font-medium">
+                  {{ r.status }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm text-green-700">RM {{ formatCurrency(inv.sales_commission) }}</td>
+              <td class="px-4 py-3 text-sm text-green-700">RM {{ formatCurrency(r.sales_commission) }}</td>
               <td class="px-4 py-3 text-right">
                 <div class="flex justify-end gap-2">
                   <button
-                    v-if="!inv.file_path"
-                    @click="openUploadFile(inv.id)"
+                    v-if="!r.file_path"
+                    @click="openUploadFile(r.id)"
                     class="text-xs text-blue-600 hover:underline"
                   >
                     Upload PDF
                   </button>
                   <button
                     v-else
-                    @click="downloadInvoice(inv.id)"
+                    @click="downloadReceipt(r.id)"
                     class="text-xs text-blue-600 hover:underline"
                   >
                     Download
@@ -163,18 +163,18 @@
       </div>
     </div>
 
-    <!-- Create Invoice Modal -->
+    <!-- Create Receipt Modal -->
     <div v-if="showCreate" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-        <h2 class="text-lg font-semibold mb-4">Record Invoice</h2>
-        <InvoiceForm @created="onInvoiceCreated" @cancel="showCreate = false" />
+        <h2 class="text-lg font-semibold mb-4">Record Receipt</h2>
+        <ReceiptForm @created="onReceiptCreated" @cancel="showCreate = false" />
       </div>
     </div>
 
     <!-- Upload PDF Modal -->
     <div v-if="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4">
-        <h3 class="text-base font-semibold mb-3">Upload Invoice PDF</h3>
+        <h3 class="text-base font-semibold mb-3">Upload Receipt PDF</h3>
         <input type="file" ref="fileInputRef" accept=".pdf" class="w-full text-sm mb-3" />
         <div class="flex gap-3">
           <button @click="doUploadFile" :disabled="uploadingFile" class="flex-1 bg-blue-600 text-white py-2 rounded text-sm disabled:opacity-50">
@@ -189,12 +189,12 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
-import { useInvoicesStore } from '../../stores/invoices';
+import { useReceiptsStore } from '../../stores/receipts';
 import { useAuthStore } from '../../stores/auth';
-import InvoiceForm from './InvoiceForm.vue';
+import ReceiptForm from './ReceiptForm.vue';
 import api from '../../utils/api';
 
-const invoicesStore = useInvoicesStore();
+const receiptsStore = useReceiptsStore();
 const auth = useAuthStore();
 
 const selectedMonth = ref(new Date().toISOString().slice(0, 7));
@@ -218,30 +218,30 @@ async function loadData() {
   const month = selectedMonth.value + '-01';
   if (auth.hasRole('admin')) {
     const [ov, comm] = await Promise.all([
-      invoicesStore.fetchAdminOverview(month),
-      invoicesStore.fetchCommissions(month),
+      receiptsStore.fetchAdminOverview(month),
+      receiptsStore.fetchCommissions(month),
     ]);
     overview.value = ov.summary;
     overviewClients.value = ov.clients || [];
     commissions.value = comm;
   } else {
-    await invoicesStore.fetchInvoices({ month });
-    const comm = await invoicesStore.fetchCommissions(month);
+    await receiptsStore.fetchReceipts({ month });
+    const comm = await receiptsStore.fetchCommissions(month);
     commissions.value = comm;
   }
 }
 
 async function markPaid(id: number) {
-  await invoicesStore.markPaid(id);
+  await receiptsStore.markPaid(id);
   await loadData();
 }
 
-async function downloadInvoice(id: number) {
-  const response = await api.get(`/api/invoices/${id}/download`, { responseType: 'blob' });
+async function downloadReceipt(id: number) {
+  const response = await api.get(`/api/receipts/${id}/download`, { responseType: 'blob' });
   const url = window.URL.createObjectURL(response.data);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `invoice-${id}.pdf`;
+  a.download = `receipt-${id}.pdf`;
   a.click();
   window.URL.revokeObjectURL(url);
 }
@@ -256,7 +256,7 @@ async function doUploadFile() {
   if (!file || !uploadTargetId.value) return;
   uploadingFile.value = true;
   try {
-    await invoicesStore.uploadFile(uploadTargetId.value, file);
+    await receiptsStore.uploadFile(uploadTargetId.value, file);
     uploadModal.value = false;
     await loadData();
   } finally {
@@ -264,7 +264,7 @@ async function doUploadFile() {
   }
 }
 
-async function onInvoiceCreated() {
+async function onReceiptCreated() {
   showCreate.value = false;
   await loadData();
 }

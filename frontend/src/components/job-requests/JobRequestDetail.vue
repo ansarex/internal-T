@@ -17,7 +17,7 @@
         <div class="flex items-center gap-3 flex-wrap">
           <SLACountdown :sla="job.sla" />
           <span :class="stageBadge" class="px-3 py-1 rounded-full text-sm font-semibold">
-            Stage {{ job.current_stage }}
+            {{ job.current_stage === 1 ? 'Sales Tasks' : 'CS Tasks' }}
           </span>
         </div>
       </div>
@@ -53,7 +53,7 @@
           :class="activeTab === 'stage1' ? 'border-b-2 border-blue-600 text-blue-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
           class="px-4 py-2 text-sm transition-colors"
         >
-          Stage 1
+          Sales Tasks
         </button>
         <button
           @click="activeTab = 'stage2'"
@@ -64,7 +64,7 @@
           ]"
           class="px-4 py-2 text-sm transition-colors flex items-center gap-1"
         >
-          Stage 2 <span v-if="job.current_stage < 2">🔒</span>
+          CS Tasks <span v-if="job.current_stage < 2">🔒</span>
         </button>
       </div>
 
@@ -134,9 +134,9 @@ const canShowSignedCopyUpload = computed(() => {
   if (!auth.hasAnyRole(['sales', 'admin'])) return false;
   if (job.value.current_stage !== 1) return false;
   if (job.value.signed_file_path) return false;
-  const saApproved = agreements.value.some((a) => a.type === 'service_agreement' && a.status === 'approved');
-  const ndaApproved = agreements.value.some((a) => a.type === 'nda' && a.status === 'approved');
-  return saApproved && ndaApproved;
+  const hasSA = agreements.value.some((a) => a.type === 'service_agreement');
+  const hasNDA = agreements.value.some((a) => a.type === 'nda');
+  return hasSA && hasNDA;
 });
 
 const billingDueDay = computed(() => {
@@ -166,7 +166,7 @@ let refreshTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(async () => {
   await auth.fetchUser();
   await refresh();
-  refreshTimer = setInterval(refresh, 30000);
+//  refreshTimer = setInterval(refresh, 30000);
 });
 
 onUnmounted(() => {

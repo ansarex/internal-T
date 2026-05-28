@@ -23,8 +23,8 @@
 
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
         <StatCard label="Stale Jobs" :value="data.summary.stale_jobs" icon-bg="bg-orange-100" value-color="text-orange-600" subtitle=">3 days inactive" />
-        <StatCard label="Stuck in Stage 2" :value="data.summary.stuck_stage2_jobs" icon-bg="bg-purple-100" value-color="text-purple-700" />
-        <StatCard label="Missing Fields" :value="data.summary.missing_fields_jobs" icon-bg="bg-gray-100" value-color="text-gray-700" subtitle="Stage 1 incomplete" />
+        <StatCard label="Stuck in CS Tasks" :value="data.summary.stuck_stage2_jobs" icon-bg="bg-purple-100" value-color="text-purple-700" />
+        <StatCard label="Missing Fields" :value="data.summary.missing_fields_jobs" icon-bg="bg-gray-100" value-color="text-gray-700" subtitle="Sales Tasks incomplete" />
       </div>
 
       <!-- Flag Sections -->
@@ -52,13 +52,13 @@
           <JobTable :jobs="data.stale_jobs" />
         </FlagSection>
 
-        <!-- Stuck Stage 2 -->
-        <FlagSection title="Stuck in Stage 2" color="purple" :count="data.stuck_tasks.length">
+        <!-- Stuck CS Tasks -->
+        <FlagSection title="Stuck in CS Tasks" color="purple" :count="data.stuck_tasks.length">
           <JobTable :jobs="data.stuck_tasks" />
         </FlagSection>
 
         <!-- Missing Fields -->
-        <FlagSection title="Missing Stage 1 Fields" color="gray" :count="data.missing_fields.length">
+        <FlagSection title="Missing Sales Task Fields" color="gray" :count="data.missing_fields.length">
           <JobTable :jobs="data.missing_fields" />
         </FlagSection>
       </div>
@@ -122,7 +122,7 @@ const JobTable = defineComponent({
           h('thead', {}, [
             h('tr', { class: 'border-b text-gray-500' }, [
               h('th', { class: 'text-left py-2 pr-4 font-medium' }, 'Client'),
-              h('th', { class: 'text-left py-2 pr-4 font-medium' }, 'Stage'),
+              h('th', { class: 'text-left py-2 pr-4 font-medium' }, 'Tasks'),
               h('th', { class: 'text-left py-2 pr-4 font-medium' }, 'Status'),
               h('th', { class: 'text-left py-2 font-medium' }, 'Action'),
             ]),
@@ -131,7 +131,7 @@ const JobTable = defineComponent({
             ...(props.jobs || []).map((job: any) =>
               h('tr', { key: job.id, class: 'border-b hover:bg-gray-50' }, [
                 h('td', { class: 'py-2 pr-4' }, job.client?.company_name || `Client #${job.client_id}`),
-                h('td', { class: 'py-2 pr-4 text-gray-500' }, `Stage ${job.current_stage}`),
+                h('td', { class: 'py-2 pr-4 text-gray-500' }, job.current_stage === 1 ? 'Sales Tasks' : 'CS Tasks'),
                 h('td', { class: 'py-2 pr-4 text-gray-500' }, job.status),
                 h('td', { class: 'py-2' }, [
                   h('a', { href: `/job-requests/${job.id}`, class: 'text-blue-600 hover:underline text-xs' }, 'View'),
@@ -147,7 +147,17 @@ const JobTable = defineComponent({
 onMounted(async () => {
   try {
     const response = await api.get('/api/dashboard');
-    data.value = response.data;
+    const d = response.data;
+    data.value = {
+      summary: d.summary ?? data.value.summary,
+      overdue_jobs: d.overdue_jobs ?? [],
+      pending_approvals: d.pending_approvals ?? [],
+      stale_jobs: d.stale_jobs ?? [],
+      stuck_tasks: d.stuck_tasks ?? [],
+      missing_fields: d.missing_fields ?? [],
+    };
+  } catch (e) {
+    console.error('Dashboard load error:', e);
   } finally {
     loading.value = false;
   }

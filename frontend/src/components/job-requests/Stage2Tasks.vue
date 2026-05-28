@@ -2,7 +2,7 @@
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <!-- Header -->
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h3 class="font-semibold text-gray-800">Stage 2 — Onboarding Tasks</h3>
+      <h3 class="font-semibold text-gray-800">CS Tasks — Onboarding</h3>
       <span v-if="allDone" class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -25,6 +25,7 @@
             :class="{
               'bg-green-500': task.status === 'completed',
               'bg-yellow-400': task.status === 'in_progress',
+              'bg-blue-400': task.status === 'pending_on_client',
               'bg-gray-200': task.status === 'pending',
             }"
           >
@@ -34,6 +35,9 @@
             <svg v-else-if="task.status === 'in_progress'" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
+            <svg v-else-if="task.status === 'pending_on_client'" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
           </div>
 
           <div class="flex-1 min-w-0">
@@ -41,7 +45,7 @@
             <div class="flex items-center justify-between gap-2 mb-1">
               <span class="text-sm font-medium text-gray-800">{{ formatTaskType(task.task_type) }}</span>
               <span :class="taskBadge(task.status)" class="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium capitalize">
-                {{ task.status.replace('_', ' ') }}
+                {{ formatStatus(task.status) }}
               </span>
             </div>
 
@@ -64,6 +68,7 @@
                   class="border border-gray-200 rounded-md px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="in_progress">In Progress</option>
+                  <option value="pending_on_client">Pending on Client</option>
                   <option value="completed">Completed</option>
                 </select>
                 <button
@@ -89,7 +94,7 @@
     <!-- Locked footer -->
     <div v-if="allDone" class="px-5 py-3 bg-green-50 border-t border-green-100">
       <p class="text-xs text-green-700">
-        All 6 onboarding tasks have been completed. This section is now read-only.
+        All 6 CS tasks have been completed. This section is now read-only.
       </p>
     </div>
   </div>
@@ -109,7 +114,7 @@ const auth = useAuthStore();
 
 const allDone = computed(() => props.job.status === 'completed');
 const canEdit = computed(() =>
-  auth.hasAnyRole(['cs', 'admin']) && props.job.current_stage === 2 && !allDone.value
+  auth.hasAnyRole(['cs', 'cs_manager', 'admin']) && props.job.current_stage === 2 && !allDone.value
 );
 
 const savingId = ref<number | null>(null);
@@ -123,7 +128,7 @@ watch(
     tasks.forEach((t) => {
       taskEdits.value[t.id] = {
         status: t.status === 'pending' ? 'in_progress' : t.status,
-        remarks: t.remarks || '',
+        remarks: t.remarks ?? '',
       };
     });
   },
@@ -162,10 +167,22 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function formatStatus(status: string) {
+  return (
+    {
+      pending: 'Pending',
+      in_progress: 'In Progress',
+      pending_on_client: 'Pending on Client',
+      completed: 'Completed',
+    }[status] ?? status
+  );
+}
+
 function taskBg(status: string) {
   return {
     'bg-green-50/60': status === 'completed',
     'bg-yellow-50/40': status === 'in_progress',
+    'bg-blue-50/40': status === 'pending_on_client',
     '': status === 'pending',
   };
 }
@@ -174,6 +191,7 @@ function taskBadge(status: string) {
   return {
     'bg-green-100 text-green-700': status === 'completed',
     'bg-yellow-100 text-yellow-700': status === 'in_progress',
+    'bg-blue-100 text-blue-700': status === 'pending_on_client',
     'bg-gray-100 text-gray-500': status === 'pending',
   };
 }

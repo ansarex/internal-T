@@ -106,8 +106,8 @@
 
           <NavItem
             v-if="auth.hasAnyRole(['sales', 'admin'])"
-            href="/invoices"
-            :active="path === '/invoices'"
+            href="/receipts"
+            :active="path === '/receipts'"
           >
             <template #icon>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
             </template>
-            Invoices
+            Receipts
           </NavItem>
 
           <NavItem
@@ -137,6 +137,7 @@
           </NavItem>
 
           <NavItem
+            v-if="auth.hasRole('admin')"
             href="/staff"
             :active="path === '/staff'"
           >
@@ -228,6 +229,7 @@ function roleColor(role: string): string {
     support: 'bg-sky-600 text-white',
     sales: 'bg-emerald-600 text-white',
     cs: 'bg-orange-500 text-white',
+    cs_manager: 'bg-teal-600 text-white',
   };
   return map[role] || 'bg-gray-600 text-white';
 }

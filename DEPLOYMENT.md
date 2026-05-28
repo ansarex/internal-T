@@ -417,3 +417,57 @@ bash /var/www/internal-t/deploy.sh
 | `systemctl restart internal-t-web` | Restart frontend |
 | `nginx -t && systemctl reload nginx` | Reload Nginx config |
 | `certbot renew --dry-run` | Test SSL renewal |
+
+
+
+--- update databse
+
+⏺ You're using GORM AutoMigrate, so the process depends on what kind of DB change it is:
+
+  ---
+  AutoMigrate handles automatically (just deploy normally):
+  - New tables
+  - New columns
+  - New indexes
+
+  AutoMigrate does NOT handle (you must run SQL manually first):
+  - Table renames
+  - Column renames
+  - Dropping columns
+
+  ---
+  For this deployment (invoices → receipts rename)
+
+  Since we renamed the table and the invoice_number column, you need to run SQL on prod before deploying the code.
+  SSH in and run:
+
+  ssh root@206.189.42.240
+  mysql -u root -p internalt
+
+  -- Rename the table
+  RENAME TABLE invoices TO receipts;
+                                              
+  -- Rename the column inside it          
+  ALTER TABLE receipts CHANGE invoice_number receipt_number VARCHAR(255) NOT NULL;
+                                                                                                                    
+  Then deploy normally:                   
+                                                                                                                    
+  bash /var/www/internal-t/deploy.sh                                                                                
+  
+  ---                                                                                                               
+  For future deployments with DB changes                                                                          
+                                              
+  Use this rule of thumb:                 
+
+  ┌──────────────────────────────┬─────────────────────────────────────────────────────┐                            
+  │         Change type          │                     What to do                      │
+  ├──────────────────────────────┼─────────────────────────────────────────────────────┤                            
+  │ New table / new column       │ Just deploy — AutoMigrate picks it up on restart    │                            
+  ├──────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ Rename table / rename column │ Run SQL manually on prod first, then deploy         │                            
+  ├──────────────────────────────┼─────────────────────────────────────────────────────┤                          
+  │ Drop column                  │ Remove from model first (deploy), then drop via SQL │
+  └──────────────────────────────┴─────────────────────────────────────────────────────┘                            
+                                          
+  For the normal redeploy (no manual SQL needed), your existing deploy.sh script handles everything.                
+                                                                                                      

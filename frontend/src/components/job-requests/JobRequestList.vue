@@ -39,7 +39,7 @@
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-              Stage {{ job.current_stage }}
+              {{ job.current_stage === 1 ? 'Sales Tasks' : 'CS Tasks' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
               {{ job.assigned_sales?.name || '—' }}

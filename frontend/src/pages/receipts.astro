@@ -1,13 +1,13 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
 import AppSidebar from '../components/shared/AppSidebar.vue';
-import InvoiceList from '../components/invoices/InvoiceList.vue';
+import ReceiptList from '../components/receipts/ReceiptList.vue';
 ---
-<AppLayout title="Invoices">
+<AppLayout title="Receipts">
   <div class="flex min-h-screen">
     <AppSidebar client:only="vue" />
     <main class="flex-1 p-6 overflow-auto">
-      <InvoiceList client:only="vue" />
+      <ReceiptList client:only="vue" />
     </main>
   </div>
 </AppLayout>

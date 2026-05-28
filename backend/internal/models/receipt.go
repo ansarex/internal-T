@@ -2,9 +2,9 @@ package models
 
 import "time"
 
-type Invoice struct {
+type Receipt struct {
 	ID              uint       `gorm:"primarykey;column:id" json:"id"`
-	InvoiceNumber   string     `gorm:"column:invoice_number;size:255;not null;uniqueIndex" json:"invoice_number"`
+	ReceiptNumber   string     `gorm:"column:receipt_number;size:255;not null;uniqueIndex" json:"receipt_number"`
 	ClientID        uint       `gorm:"column:client_id;not null" json:"client_id"`
 	JobRequestID    uint       `gorm:"column:job_request_id;not null" json:"job_request_id"`
 	AssignedSalesID *uint      `gorm:"column:assigned_sales_id" json:"assigned_sales_id,omitempty"`
@@ -32,6 +32,6 @@ type Invoice struct {
 	Creator       *User       `gorm:"foreignKey:CreatedBy" json:"creator,omitempty"`
 }
 
-func (Invoice) TableName() string {
-	return "invoices"
+func (Receipt) TableName() string {
+	return "receipts"
 }

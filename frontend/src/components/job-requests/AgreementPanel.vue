@@ -58,20 +58,6 @@
               Download
             </a>
             <button
-              v-if="auth.hasRole('admin') && ag.status === 'pending_approval'"
-              @click="approve(ag.id)"
-              class="text-xs text-green-600 hover:text-green-800 font-medium"
-            >
-              Approve
-            </button>
-            <button
-              v-if="auth.hasRole('admin') && ag.status === 'pending_approval'"
-              @click="openReject(ag.id)"
-              class="text-xs text-red-600 hover:text-red-800 font-medium"
-            >
-              Reject
-            </button>
-            <button
               v-if="auth.hasRole('admin') && editRemarksId !== ag.id"
               @click="openRemarks(ag)"
               class="text-xs text-gray-500 hover:text-gray-700"
@@ -114,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useJobRequestsStore } from '../../stores/jobRequests';
 import { useAuthStore } from '../../stores/auth';
 import type { Agreement, JobRequest } from '../../stores/jobRequests';
@@ -148,7 +134,7 @@ function byType(type: string) {
     .sort((a, b) => b.version - a.version);
 }
 
-function canUpload(type: string) {
+function canUpload(_type: string) {
   if (auth.hasRole('admin')) return true;
   return auth.hasAnyRole(['sales']) && props.job.current_stage === 1;
 }
@@ -174,24 +160,6 @@ async function doUpload() {
   } finally {
     uploading.value = false;
   }
-}
-
-async function approve(id: number) {
-  await jobStore.approveAgreement(id);
-  emit('refresh');
-}
-
-function openReject(id: number) {
-  rejectTargetId.value = id;
-  rejectNotes.value = '';
-  rejectModal.value = true;
-}
-
-async function doReject() {
-  if (!rejectTargetId.value) return;
-  await jobStore.rejectAgreement(rejectTargetId.value, rejectNotes.value || undefined);
-  rejectModal.value = false;
-  emit('refresh');
 }
 
 function openRemarks(ag: Agreement) {

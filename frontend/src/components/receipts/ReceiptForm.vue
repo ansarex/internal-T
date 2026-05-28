@@ -47,13 +47,13 @@
       ></textarea>
     </div>
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Invoice PDF (optional)</label>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Receipt PDF (optional)</label>
       <input ref="fileInput" type="file" accept=".pdf" class="w-full text-sm" />
     </div>
     <div v-if="error" class="text-red-600 text-sm bg-red-50 px-3 py-2 rounded">{{ error }}</div>
     <div class="flex gap-3">
       <button type="submit" :disabled="loading" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm font-medium">
-        {{ loading ? 'Creating...' : 'Create Invoice' }}
+        {{ loading ? 'Creating...' : 'Create Receipt' }}
       </button>
       <button type="button" @click="$emit('cancel')" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 text-sm font-medium">
         Cancel
@@ -64,10 +64,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useInvoicesStore } from '../../stores/invoices';
+import { useReceiptsStore } from '../../stores/receipts';
 
 const emit = defineEmits<{ created: []; cancel: [] }>();
-const invoicesStore = useInvoicesStore();
+const receiptsStore = useReceiptsStore();
 
 const activeClients = ref<any[]>([]);
 const loading = ref(false);
@@ -86,7 +86,7 @@ const form = ref({
 
 onMounted(async () => {
   const month = billingMonthInput.value + '-01';
-  activeClients.value = await invoicesStore.fetchActiveClients(month);
+  activeClients.value = await receiptsStore.fetchActiveClients(month);
 });
 
 function onClientChange() {
@@ -104,7 +104,7 @@ async function submit() {
   loading.value = true;
   error.value = '';
   try {
-    await invoicesStore.createInvoice({
+    await receiptsStore.createReceipt({
       client_id: form.value.client_id as number,
       job_request_id: form.value.job_request_id,
       amount: form.value.amount,
@@ -114,7 +114,7 @@ async function submit() {
     });
     emit('created');
   } catch (e: any) {
-    error.value = e.response?.data?.message || 'Failed to create invoice.';
+    error.value = e.response?.data?.message || 'Failed to create receipt.';
   } finally {
     loading.value = false;
   }
